@@ -38,7 +38,6 @@ resource "aws_route_table_association" "aws_assoc_default2" {
 
 resource "aws_default_security_group" "default_sg" {
   vpc_id = aws_vpc.vpc_default.id
-
   ingress {
     description = "HTTP Request"
     protocol    = "TCP"
@@ -81,6 +80,7 @@ resource "aws_instance" "aws_ec2_default2" {
   user_data              = base64encode(file("userdata1.sh"))
   iam_instance_profile   = aws_iam_instance_profile.iam_profile.name
 }
+# Load balancer to circulate traffic among multiple EC2 instances
 resource "aws_lb" "alb_default" {
   name               = "loudbalanceraws"
   internal           = false
@@ -134,7 +134,7 @@ resource "aws_iam_role_policy" "s3_IAM_policy" {
       {
         "Effect": "Allow",
         "Action": ["s3:GetObject", "s3:PutObject"],
-        "Resource": "arn:aws:s3:::mybucket/path/to/my/key"
+        "Resource": "arn:aws:s3:::mybucket/Remote_Backend/terraform.tfstate"
       },
       {
         "Effect": "Allow",
@@ -171,6 +171,7 @@ resource "aws_iam_instance_profile" "iam_profile" {
   name = "iam_profile"
   role = aws_iam_role.test_role.name
 }
+
 resource "aws_dynamodb_table" "terraform_state_lock" {
   name         = "terraform-state-lock"
   billing_mode = "PAY_PER_REQUEST"
@@ -181,6 +182,8 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
     type = "S"
   }
 }
+
+# Created a S3 remote backend to store the state file
 terraform{
 backend "s3" {
      bucket         = "girishkumarpillarisetty1999"
